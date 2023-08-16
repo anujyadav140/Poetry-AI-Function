@@ -9,6 +9,38 @@ const app = express();
 app.use(cors({origin: true}));
 app.use(express.json());
 
+
+exports.rhymeScheme = functions.https.onCall(async (data) => {
+  if (!data.poem) {
+    throw new functions.https.HttpsError("invalid-argument", "poem is required ...");
+  }
+
+  const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    openAIApiKey: process.env.OPENAI,
+    temperature: 1,
+  });
+
+  const rhymeSchemePrompt = new PromptTemplate({
+    inputVariables: ["poem"],
+    template: `You are a helpful poetry tutor that helps the student by finding the rhyme scheme of the given lines: {poem}.
+    if the lines do not have any concrete rhyme scheme, please specify that, and recommend few lines that follow a 
+    particular rhyme scheme, do not make stuff up if there is no concrete rhyme scheme, be as accurate as possible.`,
+  });
+
+  console.log(rhymeSchemePrompt.format({"poem": data.poem}));
+
+  const rhymeSchemeResponse = await chat.generatePrompt([
+    await rhymeSchemePrompt.formatPromptValue({
+      poem: data.poem,
+    }),
+  ]);
+  return {
+    "result": rhymeSchemeResponse.generations[0][0].text,
+    "tokens": rhymeSchemeResponse.llmOutput,
+  };
+});
+
 exports.poeticMetreFinder = functions.https.onCall(async (data) => {
   if (!data.poem) {
     throw new functions.https.HttpsError("invalid-argument", "a poem is required ...");
@@ -19,7 +51,7 @@ exports.poeticMetreFinder = functions.https.onCall(async (data) => {
     temperature: 0.9,
   });
   const template =
-    `You are a helpful poetry tutor that highlights the metre of a given {poem},'
+    `You are a helpful poetry tutor that highlights the metre of a given {poem},
     return the whole poem- for stressed syllables uppercase the syllables & for unstressed lowercase;
     write few sentences talking about it`;
   const poeticMetreFinderPrompt = ChatPromptTemplate.fromPromptMessages([
@@ -217,4 +249,3 @@ exports.generateFewLinesForInspiration = functions.https.onCall(async (data) => 
     "tokens": generateFewLinesForInspirationResponse.llmOutput,
   };
 });
-
