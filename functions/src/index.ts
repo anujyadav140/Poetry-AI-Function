@@ -9,21 +9,12 @@ const app = express();
 app.use(cors({origin: true}));
 app.use(express.json());
 
-exports.addNumbers = functions.https.onCall((data) => {
-  if (!data.num1 || !data.num2) {
-    throw new functions.https.HttpsError("invalid-argument", "'num1' and 'num2' are required.");
-  }
-
-  const result = data.num1 + data.num2;
-
-  return {result};
-});
-
 exports.poeticMetreFinder = functions.https.onCall(async (data) => {
   if (!data.poem) {
     throw new functions.https.HttpsError("invalid-argument", "a poem is required ...");
   }
   const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI,
     temperature: 0.9,
   });
@@ -35,13 +26,16 @@ exports.poeticMetreFinder = functions.https.onCall(async (data) => {
     SystemMessagePromptTemplate.fromTemplate(template),
     HumanMessagePromptTemplate.fromTemplate("{poem}"),
   ]);
-  console.log(poeticMetreFinderPrompt);
+  console.log(poeticMetreFinderPrompt.format({"poem": data.poem}));
   const poeticMetreFinderResponse = await chat.generatePrompt([
     await poeticMetreFinderPrompt.formatPromptValue({
       poem: data.poem,
     }),
   ]);
-  return {"result": poeticMetreFinderResponse.generations[0][0].text};
+  return {
+    "result": poeticMetreFinderResponse.generations[0][0].text,
+    "tokens": poeticMetreFinderResponse.llmOutput,
+  };
 });
 
 exports.reviewTheFeatures = functions.https.onCall(async (data) => {
@@ -50,6 +44,7 @@ exports.reviewTheFeatures = functions.https.onCall(async (data) => {
   }
 
   const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI,
     temperature: 1,
   });
@@ -62,7 +57,7 @@ exports.reviewTheFeatures = functions.https.onCall(async (data) => {
     SystemMessagePromptTemplate.fromTemplate(template),
     HumanMessagePromptTemplate.fromTemplate("{poem}"),
   ]);
-  console.log(reviewTheFeaturesPrompt);
+  console.log(reviewTheFeaturesPrompt.format({"poem": data.poem, "features": data.features}));
 
   const reviewTheFeaturesResponse = await chat.generatePrompt([
     await reviewTheFeaturesPrompt.formatPromptValue({
@@ -70,7 +65,10 @@ exports.reviewTheFeatures = functions.https.onCall(async (data) => {
       features: data.features,
     }),
   ]);
-  return {"result": reviewTheFeaturesResponse.generations[0][0].text};
+  return {
+    "result": reviewTheFeaturesResponse.generations[0][0].text,
+    "tokens": reviewTheFeaturesResponse.llmOutput,
+  };
 });
 
 exports.rhymeTwoSelectedLines = functions.https.onCall(async (data) => {
@@ -79,6 +77,7 @@ exports.rhymeTwoSelectedLines = functions.https.onCall(async (data) => {
   }
 
   const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI,
     temperature: 1,
   });
@@ -90,14 +89,17 @@ exports.rhymeTwoSelectedLines = functions.https.onCall(async (data) => {
     SystemMessagePromptTemplate.fromTemplate(template),
     HumanMessagePromptTemplate.fromTemplate("{selectedLines}"),
   ]);
-  console.log(rhymeTwoSelectedLinesPrompt);
+  console.log(rhymeTwoSelectedLinesPrompt.format({"selectedLines": data.selectedLines}));
 
   const rhymeTwoSelectedLinesResponse = await chat.generatePrompt([
     await rhymeTwoSelectedLinesPrompt.formatPromptValue({
       selectedLines: data.selectedLines,
     }),
   ]);
-  return {"result": rhymeTwoSelectedLinesResponse.generations[0][0].text};
+  return {
+    "result": rhymeTwoSelectedLinesResponse.generations[0][0].text,
+    "tokens": rhymeTwoSelectedLinesResponse.llmOutput,
+  };
 });
 
 exports.generateQuickLines = functions.https.onCall(async (data) => {
@@ -105,7 +107,12 @@ exports.generateQuickLines = functions.https.onCall(async (data) => {
     throw new functions.https.HttpsError("invalid-argument", "Previous lines list, next lines, previous line & features are required ...");
   }
 
+  const form = data.features[0];
+  const syllables = data.features[1];
+  const rhyme = data.features[2];
+
   const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI,
     temperature: 1,
   });
@@ -123,17 +130,29 @@ exports.generateQuickLines = functions.https.onCall(async (data) => {
     SystemMessagePromptTemplate.fromTemplate(template),
     HumanMessagePromptTemplate.fromTemplate("{previousLines}"),
   ]);
-  console.log(generateQuickLinesPrompt);
+  console.log(generateQuickLinesPrompt.format({
+    "previousLine": data.previousLine,
+    "nextLines": data.nextLines,
+    "previousLines": data.previousLines,
+    "form": form,
+    "syllables": syllables,
+    "rhyme": rhyme,
+  }));
 
   const generateQuickLinesResponse = await chat.generatePrompt([
     await generateQuickLinesPrompt.formatPromptValue({
       previousLine: data.previousLine,
       nextLines: data.nextLines,
       previousLines: data.previousLines,
-      features: data.features,
+      form: data.form,
+      syllables: data.syllables,
+      rhyme: data.rhyme,
     }),
   ]);
-  return {"result": generateQuickLinesResponse.generations[0][0].text};
+  return {
+    "result": generateQuickLinesResponse.generations[0][0].text,
+    "tokens": generateQuickLinesResponse.llmOutput,
+  };
 });
 
 exports.changeLinesToFollowMetre = functions.https.onCall(async (data) => {
@@ -142,6 +161,7 @@ exports.changeLinesToFollowMetre = functions.https.onCall(async (data) => {
   }
 
   const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI,
     temperature: 1,
   });
@@ -160,5 +180,41 @@ exports.changeLinesToFollowMetre = functions.https.onCall(async (data) => {
       lines: data.lines,
     }),
   ]);
-  return {"result": changeLinesToFollowMetreResponse.generations[0][0].text};
+  return {
+    "result": changeLinesToFollowMetreResponse.generations[0][0].text,
+    "tokens": changeLinesToFollowMetreResponse.llmOutput,
+  };
 });
+
+exports.generateFewLinesForInspiration = functions.https.onCall(async (data) => {
+  if (!data.lines) {
+    throw new functions.https.HttpsError("invalid-argument", "lines are required ...");
+  }
+
+  const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    openAIApiKey: process.env.OPENAI,
+    temperature: 1,
+  });
+
+  const generateFewLinesForInspirationPrompt = new PromptTemplate({
+    inputVariables: ["lines"],
+    template: `You are a helpful poetry tutor that helps the student by generating few lines
+    for inspiration, try to inspire your student by just generating a few lines based on the {lines} provided to you for context,
+    make sure to follow the style of the lines provided to you, try to be as inspirational as possible 
+    but to not diverge from the context of the lines given to you for context.`,
+  });
+
+  console.log(generateFewLinesForInspirationPrompt.format({"lines": data.lines}));
+
+  const generateFewLinesForInspirationResponse = await chat.generatePrompt([
+    await generateFewLinesForInspirationPrompt.formatPromptValue({
+      lines: data.lines,
+    }),
+  ]);
+  return {
+    "result": generateFewLinesForInspirationResponse.generations[0][0].text,
+    "tokens": generateFewLinesForInspirationResponse.llmOutput,
+  };
+});
+
