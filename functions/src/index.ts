@@ -249,3 +249,34 @@ exports.generateFewLinesForInspiration = functions.https.onCall(async (data) => 
     "tokens": generateFewLinesForInspirationResponse.llmOutput,
   };
 });
+
+exports.getInspired = functions.https.onCall(async (data) => {
+  if (!data.lines) {
+    throw new functions.https.HttpsError("invalid-argument", "lines are required ...");
+  }
+
+  const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    openAIApiKey: process.env.OPENAI,
+    temperature: 1,
+  });
+
+  const getInspiredPrompt = new PromptTemplate({
+    inputVariables: ["lines"],
+    template: `You are a helpful poetry tutor that helps the student by helping them get inspired to unleash their 
+    creativity,   tell any trivia or some anecdote or advice based on their poetry: 
+    {lines}, suggest poets that match the vibe of their poetry. Respond in less than 125 words approx.`,
+  });
+
+  console.log(getInspiredPrompt.format({"lines": data.lines}));
+
+  const getInspiredResponse = await chat.generatePrompt([
+    await getInspiredPrompt.formatPromptValue({
+      lines: data.lines,
+    }),
+  ]);
+  return {
+    "result": getInspiredResponse.generations[0][0].text,
+    "tokens": getInspiredResponse.llmOutput,
+  };
+});
