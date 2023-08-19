@@ -157,7 +157,7 @@ exports.generateQuickLines = functions.https.onCall(async (data) => {
   1. The form should be: {form}; 
   2. Count the syllables make sure they are EXACTLY {syllables}, the syllable count should be exactly {syllables}'
   3. The rhyme scheme pattern should be strictly: {rhyme}.
-  Generate exactly between 5 to 8 lines (NOT MORE THAN THAT!), without labelling or numbering them`;
+  Generate exactly 5 (NOT MORE THAN THAT!), without labelling or numbering them`;
   const generateQuickLinesPrompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(template),
     HumanMessagePromptTemplate.fromTemplate("{previousLines}"),
