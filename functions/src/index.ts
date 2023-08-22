@@ -70,6 +70,38 @@ exports.poeticMetreFinder = functions.https.onCall(async (data) => {
   };
 });
 
+exports.recommendPoem = functions.https.onCall(async (data) => {
+  if (!data.poem) {
+    throw new functions.https.HttpsError("invalid-argument", "a poem is required ...");
+  }
+
+  const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    openAIApiKey: process.env.OPENAI,
+    temperature: 1,
+  });
+
+  const template =
+  `You are a helpful poetry tutor that helps the student by recommending poems and poets to the student based on their poem:
+  {poem}; so that they can improve their poetry. if the poem does not make sense, or it is empty, still recommend poetry that
+  helps them.Response should be in under 100 words.`;
+  const recommendPoemPrompt = ChatPromptTemplate.fromPromptMessages([
+    SystemMessagePromptTemplate.fromTemplate(template),
+    HumanMessagePromptTemplate.fromTemplate("{poem}"),
+  ]);
+  console.log(recommendPoemPrompt.format({"poem": data.poem}));
+
+  const recommendPoemResponse = await chat.generatePrompt([
+    await recommendPoemPrompt.formatPromptValue({
+      poem: data.poem,
+    }),
+  ]);
+  return {
+    "result": recommendPoemResponse.generations[0][0].text,
+    "tokens": recommendPoemResponse.llmOutput,
+  };
+});
+
 exports.reviewTheFeatures = functions.https.onCall(async (data) => {
   if (!data.poem || !data.features) {
     throw new functions.https.HttpsError("invalid-argument", "a poem & features list is required ...");
@@ -188,10 +220,6 @@ exports.generateQuickLines = functions.https.onCall(async (data) => {
 });
 
 exports.changeLinesToFollowMetre = functions.https.onCall(async (data) => {
-  if (!data.lines || !data.metreFeature) {
-    throw new functions.https.HttpsError("invalid-argument", "lines & metre feature is required ...");
-  }
-
   const chat = new ChatOpenAI({
     modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI,
@@ -201,7 +229,7 @@ exports.changeLinesToFollowMetre = functions.https.onCall(async (data) => {
   const changeLinesToFollowMetrePrompt = new PromptTemplate({
     inputVariables: ["lines", "metreFeature"],
     template: `You are a helpful poetry tutor that helps the student in converting the following lines: "{lines}" of poetry to {metreFeature};
-    you make sure the "{lines}" follow the required {metreFeature} metre, without chaning the meaning of the lines`,
+    you make sure the "{lines}" follow the required {metreFeature} metre, do not change the rhyme scheme pattern of the lines and do not change the meaning of the lines`,
   });
 
   console.log(changeLinesToFollowMetrePrompt.format({"metreFeature": data.metreFeature, "lines": data.lines}));
@@ -278,5 +306,36 @@ exports.getInspired = functions.https.onCall(async (data) => {
   return {
     "result": getInspiredResponse.generations[0][0].text,
     "tokens": getInspiredResponse.llmOutput,
+  };
+});
+
+exports.rhymeWholePoem = functions.https.onCall(async (data) => {
+  if (!data.lines || !data.rhymeScheme) {
+    throw new functions.https.HttpsError("invalid-argument", "lines & rhyme scheme are required ...");
+  }
+
+  const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    openAIApiKey: process.env.OPENAI,
+    temperature: 1,
+  });
+
+  const rhymeWholePoemPrompt = new PromptTemplate({
+    inputVariables: ["lines", "rhymeScheme"],
+    template: `Convert these lines: {lines} into the given {rhymeScheme} rhyme scheme. Make sure the rhyme scheme is followed
+    accurately, do not change the meaning, style, meter of the lines given to you, just make it fit the rhyme scheme given to you.`,
+  });
+
+  console.log(rhymeWholePoemPrompt.format({"lines": data.lines, "rhymeScheme": data.rhymeScheme}));
+
+  const rhymeWholePoemResponse = await chat.generatePrompt([
+    await rhymeWholePoemPrompt.formatPromptValue({
+      lines: data.lines,
+      rhymeScheme: data.rhymeScheme,
+    }),
+  ]);
+  return {
+    "result": rhymeWholePoemResponse.generations[0][0].text,
+    "tokens": rhymeWholePoemResponse.llmOutput,
   };
 });
