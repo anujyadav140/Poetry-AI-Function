@@ -82,7 +82,7 @@ exports.recommendPoem = functions.https.onCall(async (data) => {
   });
 
   const template =
-  `You are a helpful poetry tutor that helps the student by recommending poems and poets to the student based on their poem:
+  `You are a helpful poetry tutor that helps the student by recommending poems and poets based on this poem:
   {poem}; so that they can improve their poetry. if the poem does not make sense, or it is empty, still recommend poetry that
   helps them.Response should be in under 100 words.`;
   const recommendPoemPrompt = ChatPromptTemplate.fromPromptMessages([
