@@ -324,13 +324,14 @@ exports.rhymeWholePoem = functions.https.onCall(async (data) => {
     inputVariables: ["lines", "rhymeScheme"],
     // template: `Convert these lines: {lines} into the given {rhymeScheme} rhyme scheme. Make sure the rhyme scheme is followed
     // accurately, do not change the meaning, style, meter of the lines given to you, just make it fit the rhyme scheme given to you.`,
-    template: `You are a highly skilled and talented poet who specializes in transforming poetry to 
-    match specific rhyme schemes. Your expertise lies in maintaining the meaning, style, and meter of 
-    the original poem while creating exquisite and melodious verses. To assist you in this collaboration, 
-    I will provide the original lines {lines} of my poem along with the desired rhyme scheme for each line. 
-    It is important that you clearly indicate the intended rhyme pattern (e.g., ABAB, AABB, ABBA) for each line in your response. 
-    Please prioritize accuracy and satisfaction in your transformation. Let's work together to create beautiful and harmonious poetry!
-    `,
+    // template: `You are a highly skilled and talented poet who specializes in transforming poetry to
+    // match this specific {rhymeScheme} rhyme scheme. Change the lines completely but preserve the meaning,
+    // I will provide the original lines {lines} of my poem along with the desired {rhymeScheme} for each line.
+    // It is important that you clearly indicate the intended rhyme pattern (e.g., ABAB, AABB, ABBA) for the whole poem in your response.
+    // if the lines are already rhymed a certain way, please change the whole rhyme structure with the above rhyme scheme pattern.
+    // Change the lines however you want but preserve the general meaning.`,
+    template: `You are a poetry tutor, that answers based on the instructions of your student based on their poetry lines,
+    these are the lines: {lines} and this is the instruction which you have to answer to: {rhymeScheme}`,
   });
 
   console.log(rhymeWholePoemPrompt.format({"lines": data.lines, "rhymeScheme": data.rhymeScheme}));
