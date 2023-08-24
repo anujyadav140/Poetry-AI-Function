@@ -322,8 +322,15 @@ exports.rhymeWholePoem = functions.https.onCall(async (data) => {
 
   const rhymeWholePoemPrompt = new PromptTemplate({
     inputVariables: ["lines", "rhymeScheme"],
-    template: `Convert these lines: {lines} into the given {rhymeScheme} rhyme scheme. Make sure the rhyme scheme is followed
-    accurately, do not change the meaning, style, meter of the lines given to you, just make it fit the rhyme scheme given to you.`,
+    // template: `Convert these lines: {lines} into the given {rhymeScheme} rhyme scheme. Make sure the rhyme scheme is followed
+    // accurately, do not change the meaning, style, meter of the lines given to you, just make it fit the rhyme scheme given to you.`,
+    template: `You are a highly skilled and talented poet who specializes in transforming poetry to 
+    match specific rhyme schemes. Your expertise lies in maintaining the meaning, style, and meter of 
+    the original poem while creating exquisite and melodious verses. To assist you in this collaboration, 
+    I will provide the original lines {lines} of my poem along with the desired rhyme scheme for each line. 
+    It is important that you clearly indicate the intended rhyme pattern (e.g., ABAB, AABB, ABBA) for each line in your response. 
+    Please prioritize accuracy and satisfaction in your transformation. Let's work together to create beautiful and harmonious poetry!
+    `,
   });
 
   console.log(rhymeWholePoemPrompt.format({"lines": data.lines, "rhymeScheme": data.rhymeScheme}));
