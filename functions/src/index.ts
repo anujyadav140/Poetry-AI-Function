@@ -310,9 +310,9 @@ exports.getInspired = functions.https.onCall(async (data) => {
 });
 
 exports.rhymeWholePoem = functions.https.onCall(async (data) => {
-  if (!data.lines || !data.rhymeScheme) {
-    throw new functions.https.HttpsError("invalid-argument", "lines & rhyme scheme are required ...");
-  }
+  // if (!data.lines || !data.rhymeScheme) {
+  //   throw new functions.https.HttpsError("invalid-argument", "lines & rhyme scheme are required ...");
+  // }
 
   const chat = new ChatOpenAI({
     modelName: "gpt-3.5-turbo",
